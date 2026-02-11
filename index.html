@@ -376,426 +376,228 @@
 
 
 
-        const apiKey = "";
-
-        const firebaseConfig = JSON.parse(__firebase_config);
-
-        const app = initializeApp(firebaseConfig);
-
-        const auth = getAuth(app);
-
-        const db = getFirestore(app);
-
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-
-
-        // --- Application State ---
-
-        let user = null;
-
-        let selections = {
-
-            role: INITIAL_CONFIG.roles[0],
-
-            infographic: null,
-
-            visual_style: INITIAL_CONFIG.visual_styles[0],
-
-            tone: INITIAL_CONFIG.tones[0],
-
-            audience: INITIAL_CONFIG.audiences[0],
-
-            color: INITIAL_CONFIG.colors[0],
-
-            notes: [INITIAL_CONFIG.notes[1], INITIAL_CONFIG.notes[2], INITIAL_CONFIG.notes[5]],
-
+        // --- Firebase Config (Placeholder) ---
+        // 注意：在 GitHub Pages 上，如果你需要儲存功能，請填入你自己的 Firebase 配置。
+        // 目前我們先讓它在沒有配置的情況下也能正常運作介面。
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
 
+        const apiKey = ""; // 填入你的 Gemini API Key 以啟用 AI 分析功能
+
+        // --- Application State ---
+        let user = null;
+        let selections = {
+            role: INITIAL_CONFIG.roles[0],
+            infographic: null,
+            visual_style: INITIAL_CONFIG.visual_styles[0],
+            tone: INITIAL_CONFIG.tones[0],
+            audience: INITIAL_CONFIG.audiences[0],
+            color: INITIAL_CONFIG.colors[0],
+            notes: [INITIAL_CONFIG.notes[1], INITIAL_CONFIG.notes[2], INITIAL_CONFIG.notes[5]],
+        };
         let title = '';
-
         let customNotes = '';
-
         let analyzing = false;
 
-
-
         // --- DOM Elements ---
-
         const selectionGroupsContainer = document.getElementById('selection-groups-container');
-
         const titleInput = document.getElementById('title-input');
-
         const customNotesInput = document.getElementById('custom-notes-input');
-
         const promptOutput = document.getElementById('prompt-output');
-
         const copyBtn = document.getElementById('copy-btn');
-
         const fileInput = document.getElementById('file-input');
-
         const fileDisplay = document.getElementById('file-display');
-
         const analyzeDetailedBtn = document.getElementById('analyze-detailed');
-
         const analyzeConciseBtn = document.getElementById('analyze-concise');
-
         const resetAllBtn = document.getElementById('reset-all-btn');
-
         const clearSelectionsBtn = document.getElementById('clear-selections-btn');
-
-
 
         // --- Functions ---
 
-
-
         const buildPrompt = () => {
-
             const buildSection = (titleLabel, categoryKey) => {
-
                 const stateKey = categoryKey.replace(/s$/, '');
-
                 const selection = selections[stateKey];
-
                 if (!selection) return "";
-
                 return `\n# ${titleLabel}\n${selection.prompt}\n`;
-
             };
-
-
 
             const buildNoteSection = () => {
-
                 const selectedNotes = selections.notes;
-
                 if (!selectedNotes || selectedNotes.length === 0) return "";
-
                 const list = selectedNotes.map(n => `- ${n.prompt}`).join('\n');
-
                 return `\n# 具體要求\n${list}\n`;
-
             };
 
-
-
             let prompt = "";
-
             if (title.trim()) prompt += `# 內容標題\n"${title.trim()}"\n`;
-
             if (selections.role) prompt += buildSection("角色設定", "roles");
-
             if (selections.infographic) prompt += buildSection("懶人包樣式", "infographics");
 
-
-
             if (selections.visual_style || selections.color) {
-
                 prompt += `\n# 視覺與風格\n`;
-
                 if (selections.visual_style) prompt += selections.visual_style.prompt + "\n";
-
                 if (selections.color) prompt += selections.color.prompt + "\n";
-
             }
-
-
 
             if (selections.tone || selections.audience) {
-
                 prompt += `\n# 策略設定\n`;
-
                 if (selections.tone) prompt += selections.tone.prompt + "\n";
-
                 if (selections.audience) prompt += selections.audience.prompt + "\n";
-
             }
-
-
 
             if (customNotes && customNotes.trim()) {
-
                 prompt += `\n# 任務細節與額外備註\n${customNotes.trim()}\n`;
-
             }
 
-
-
             prompt += buildNoteSection();
-
             promptOutput.textContent = prompt.trim();
-
         };
 
-
-
         const renderSelections = () => {
-
             selectionGroupsContainer.innerHTML = '';
-
            
-
             const groups = [
-
                 { label: "1. 角色", key: "roles" },
-
                 { label: "2. 懶人包", key: "infographics" },
-
                 { label: "3. 風格", key: "visual_styles" },
 
                 { label: "4. 語氣", key: "tones" },
-
                 { label: "5. 受眾", key: "audiences" },
-
                 { label: "6. 配色", key: "colors", isColor: true },
-
                 { label: "7. 備註", key: "notes", isMulti: true }
-
             ];
 
-
-
             groups.forEach(group => {
-
                 const groupEl = document.createElement('div');
-
                 groupEl.className = 'mb-2 shrink-0';
-
                
-
                 const titleEl = document.createElement('h3');
-
                 titleEl.className = 'text-[10px] font-bold text-gray-400 uppercase tracking-tight mb-1 leading-none';
-
                 titleEl.innerHTML = `${group.label} ${group.isMulti ? '<span class="text-indigo-400 normal-case ml-1 font-normal opacity-70">(複選)</span>' : ''}`;
-
                 groupEl.appendChild(titleEl);
 
-
-
                 const grid = document.createElement('div');
-
                 grid.className = 'grid grid-cols-8 gap-0.5 w-fit';
 
-
-
                 INITIAL_CONFIG[group.key].forEach(opt => {
-
                     const btn = document.createElement('button');
-
                     const stateKey = group.key.replace(/s$/, '');
-
                     const isActive = group.isMulti
-
                         ? selections.notes.some(n => n.id === opt.id)
-
                         : selections[stateKey]?.id === opt.id;
 
-
-
                     btn.className = `selection-btn group relative flex flex-col items-center justify-center h-[26px] w-[60px] rounded transition-all text-[10px] text-center border shrink-0 ${
-
                         isActive ? 'active' : 'border-slate-100 bg-white text-gray-400 hover:border-indigo-200'
-
                     }`;
-
                    
-
                     btn.innerHTML = `<div class="truncate w-full px-0.5 leading-tight">${opt.label}</div>`;
-
                    
-
                     if (group.isColor && opt.swatches) {
-
                         const swatchContainer = document.createElement('div');
-
                         swatchContainer.className = 'flex gap-0.5 mt-[1px]';
-
                         opt.swatches.forEach(c => {
-
                             const swatch = document.createElement('div');
-
                             swatch.className = 'w-1.5 h-0.5 border border-black/5';
-
                             swatch.style.backgroundColor = c;
-
                             swatchContainer.appendChild(swatch);
-
                         });
-
                         btn.appendChild(swatchContainer);
-
                     }
-
-
 
                     btn.onclick = () => {
-
                         if (group.isMulti) {
-
                             const index = selections.notes.findIndex(n => n.id === opt.id);
-
                             if (index > -1) selections.notes.splice(index, 1);
-
                             else selections.notes.push(opt);
-
                         } else {
-
                             selections[stateKey] = selections[stateKey]?.id === opt.id ? null : opt;
-
                         }
-
                         renderSelections();
-
                         buildPrompt();
-
                     };
-
                     grid.appendChild(btn);
-
                 });
-
                 groupEl.appendChild(grid);
-
                 selectionGroupsContainer.appendChild(groupEl);
-
             });
-
         };
 
-
-
         const analyzeSlide = async (mode = 'detailed') => {
-
             const file = fileInput.files[0];
-
             if (!file || analyzing) return;
-
            
-
             analyzing = true;
-
             analyzeDetailedBtn.disabled = true;
-
             analyzeConciseBtn.disabled = true;
-
             const originalDetailedText = analyzeDetailedBtn.innerHTML;
-
             const originalConciseText = analyzeConciseBtn.innerHTML;
-
            
-
             if(mode === 'detailed') analyzeDetailedBtn.innerHTML = '<i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i> 分析中...';
-
             else analyzeConciseBtn.innerHTML = '<i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i> 分析中...';
-
             lucide.createIcons();
 
-
-
             try {
-
                 const reader = new FileReader();
-
                 reader.readAsDataURL(file);
-
                 reader.onloadend = async () => {
-
                     const base64Data = reader.result.split(',')[1];
-
                     let prompt = mode === 'detailed'
-
                         ? "你是一位專業的視覺分析師。請詳細分析這份 NotebookLM PDF 投影片（或圖片內容）的視覺設計元素，包括配色方案、排版邏輯、字體特點以及整體的視覺氛圍。請以「條列式」的方式呈現分析結果，並將最關鍵的核心重點放在最前面。分析結果應是一段可以用於 AI 內容生成的「提示詞描述」，且必須使用「繁體中文」撰寫。請直接回傳分析後的條列內容，不要有額外的開場白或結論。"
-
                         : "你是一位專業的視覺分析師。請以「極其精煉」且「文字精練」的條列式文字，快速分析這張投影片的風格與排版核心。排除贅字，重點放前面，總字數控制在 100 字以內，並使用「繁體中文」撰寫。請直接回傳核心條列內容。";
 
-
-
                     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-
                         method: 'POST',
-
                         headers: { 'Content-Type': 'application/json' },
-
                         body: JSON.stringify({
-
                             contents: [{
-
                                 parts: [
-
                                     { text: prompt },
-
                                     { inlineData: { mimeType: file.type || 'application/pdf', data: base64Data } }
-
                                 ]
-
                             }]
-
                         })
-
                     });
 
-
-
                     const result = await response.json();
-
                     const analysisText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-
                     if (analysisText) {
-
                         const header = mode === 'detailed' ? "--- AI 分析結果 (詳細版) ---" : "--- AI 分析結果 (精簡版) ---";
-
                         customNotes = (customNotes ? customNotes + "\n\n" : "") + header + "\n" + analysisText.trim();
-
                         customNotesInput.value = customNotes;
-
                         buildPrompt();
-
                     }
-
                    
-
                     finishAnalysis();
-
                 };
-
             } catch (err) {
-
                 console.error("分析失敗:", err);
-
                 finishAnalysis();
-
             }
 
 
 
             function finishAnalysis() {
-
                 analyzing = false;
-
                 analyzeDetailedBtn.disabled = false;
-
                 analyzeConciseBtn.disabled = false;
-
                 analyzeDetailedBtn.innerHTML = originalDetailedText;
-
                 analyzeConciseBtn.innerHTML = originalConciseText;
-
                 lucide.createIcons();
-
             }
-
         };
-
-
 
         // --- Event Listeners ---
 
 
 
         titleInput.oninput = (e) => { title = e.target.value; buildPrompt(); };
-
         customNotesInput.oninput = (e) => { customNotes = e.target.value; buildPrompt(); };
 
 
@@ -976,61 +778,17 @@
 
 
 
-        // --- Auth & Initialize ---
+        // --- Initialize ---
 
-        const init = async () => {
+        const init = () => {
 
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            // 目前移除 Firebase 依賴，直接渲染
 
-                await signInWithCustomToken(auth, __initial_auth_token);
+            renderSelections();
 
-            } else {
+            buildPrompt();
 
-                await signInAnonymously(auth);
-
-            }
-
-
-
-            onAuthStateChanged(auth, async (u) => {
-
-                user = u;
-
-                if (!user) return;
-
-               
-
-                // Load from Firestore
-
-                try {
-
-                    const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'config');
-
-                    const snap = await getDoc(docRef);
-
-                    if (snap.exists()) {
-
-                        const data = snap.data();
-
-                        if (data.selections) selections = data.selections;
-
-                        if (data.title) { title = data.title; titleInput.value = title; }
-
-                        if (data.customNotes) { customNotes = data.customNotes; customNotesInput.value = customNotes; }
-
-                    }
-
-                } catch (e) { console.error("Load failed", e); }
-
-               
-
-                renderSelections();
-
-                buildPrompt();
-
-                lucide.createIcons();
-
-            });
+            lucide.createIcons();
 
         };
 
