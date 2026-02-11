@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+
+<html lang="zh-TW">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>「觀點LAB」提示詞資料庫 V1</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+
+        .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+
+        .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
+        .dark-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+
+       
+
+        #resizer:hover { background-color: #818cf8; }
+
+        .selection-btn.active {
+
+            border-color: #6366f1;
+
+            background-color: #eef2ff;
+
+            color: #4338ca;
+
+            font-weight: bold;
+
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
+        }
+
+    </style>
+
+</head>
+
+<body class="h-screen bg-slate-100 flex flex-col font-sans text-slate-900 overflow-hidden">
+
+
+
+    <!-- Header -->
+
+    <header class="shrink-0 p-3 border-b border-slate-200 bg-white z-10 shadow-sm">
+
+        <div class="max-w-full mx-auto flex items-center justify-between">
+
+            <h1 class="text-lg font-black text-slate-800 flex items-center gap-2">
+
+                <span class="bg-indigo-600 text-white px-1.5 py-0.5 rounded text-xs tracking-tighter shadow-sm">P.L.</span>
+
+                「觀點LAB」提示詞資料庫 <span class="text-[10px] text-slate-400 font-normal uppercase">V1</span>
+
+            </h1>
+
+            <div class="flex items-center gap-2">
+
+                <button id="reset-all-btn" class="text-[10px] font-bold text-red-500 hover:text-red-700 border border-red-100 bg-red-50 px-3 py-1 rounded transition-all active:scale-95 uppercase tracking-tighter flex items-center gap-1">
+
+                    <i data-lucide="x-circle" class="w-3 h-3"></i> 全部清除
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- Main Content -->
+
+    <main class="flex-grow flex flex-nowrap overflow-hidden p-3 gap-0" id="container">
+
+       
+
+        <!-- Left Panel: Configuration -->
+
+        <div id="left-panel" class="h-full flex flex-col shrink-0 overflow-hidden border border-slate-200 rounded-l-lg bg-white shadow-sm" style="flex-basis: 60%;">
+
+            <div class="flex-grow overflow-y-auto overflow-x-auto p-3 scrollbar-thin">
+
+                <div class="min-w-[500px] lg:min-w-0" id="config-sections">
+
+                   
+
+                    <!-- AI Analysis Section -->
+
+                    <div class="mb-4 p-3 bg-indigo-50 border border-indigo-100 rounded-lg">
+
+                        <h3 class="text-[10px] font-bold text-indigo-900 uppercase tracking-tight mb-2 flex items-center gap-2">
+
+                            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-600"></i> AI 投影片分析 (NotebookLM PDF 檔案)
+
+                        </h3>
+
+                        <div class="flex items-center gap-3">
+
+                            <label class="flex-1 cursor-pointer flex items-center justify-center gap-2 border-2 border-dashed border-indigo-200 bg-white rounded-md p-2 hover:border-indigo-400 transition-all">
+
+                                <input type="file" id="file-input" class="hidden" accept="image/*,.pdf">
+
+                                <div id="file-display" class="flex items-center gap-2 text-indigo-400">
+
+                                    <i data-lucide="upload" class="w-4 h-4"></i>
+
+                                    <span class="text-[10px] font-bold">上傳 NotebookLM PDF 或截圖檔案</span>
+
+                                </div>
+
+                            </label>
+
+                            <div class="flex flex-col gap-1 w-32 shrink-0">
+
+                                <button id="analyze-detailed" class="px-3 py-1.5 rounded-md text-[10px] font-bold flex items-center justify-center gap-1.5 transition-all bg-slate-200 text-slate-400 cursor-not-allowed" disabled>
+
+                                    <i data-lucide="sparkles" class="w-3 h-3"></i> 一鍵分析風格
+
+                                </button>
+
+                                <button id="analyze-concise" class="px-3 py-1.5 rounded-md text-[10px] font-bold flex items-center justify-center gap-1.5 transition-all bg-slate-200 text-slate-400 cursor-not-allowed" disabled>
+
+                                    <i data-lucide="zap" class="w-3 h-3"></i> 分析風格-精簡版
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- Title Input -->
+
+                    <div class="mb-3">
+
+                        <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-tight mb-1 leading-none">0. 封面標題</h3>
+
+                        <input type="text" id="title-input" placeholder="輸入標題..." class="w-full px-2 py-1 rounded border border-orange-200 bg-orange-50 text-[10px] outline-none focus:border-indigo-500 focus:bg-white transition-all shadow-inner">
+
+                    </div>
+
+
+
+                    <!-- Clear Selections -->
+
+                    <div class="mb-4 pt-1">
+
+                        <button id="clear-selections-btn" class="w-full text-[10px] font-bold bg-orange-500 hover:bg-orange-600 text-white py-1.5 rounded transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm uppercase tracking-wider">
+
+                            <i data-lucide="rotate-ccw" class="w-3 h-3"></i> 一鍵取消選取按鈕
+
+                        </button>
+
+                    </div>
+
+
+
+                    <!-- Dynamic Selection Groups will be injected here -->
+
+                    <div id="selection-groups-container"></div>
+
+                   
+
+                    <!-- Custom Notes -->
+
+                    <div class="mt-1 pt-2 border-t border-slate-100">
+
+                        <h3 class="text-[10px] font-bold text-gray-400 uppercase mb-1 leading-none">8. 其他備註 (AI 分析結果也會填入此處)</h3>
+
+                        <textarea id="custom-notes-input" placeholder="在此輸入自訂要求或額外細節備註..." class="w-full h-24 p-2 rounded border border-slate-100 bg-slate-50 text-[10px] outline-none focus:border-indigo-500 focus:bg-white transition-all resize-none shadow-inner"></textarea>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- Resizer -->
+
+        <div id="resizer" class="w-1.5 h-full cursor-col-resize transition-colors flex items-center justify-center shrink-0 bg-slate-200 group">
+
+            <div class="w-[1px] h-16 bg-slate-400 group-hover:bg-white rounded-full"></div>
+
+        </div>
+
+
+
+        <!-- Right Panel: Output -->
+
+        <div id="right-panel" class="h-full flex-1 min-w-0 flex flex-col border border-slate-800 rounded-r-lg shadow-xl bg-slate-900">
+
+            <div class="px-3 py-1.5 bg-slate-800 flex justify-between items-center border-b border-slate-700 shrink-0">
+
+                <span class="text-[10px] text-slate-400 font-mono tracking-widest uppercase">Prompt Output</span>
+
+                <button id="copy-btn" class="text-[10px] font-bold bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded transition-all active:scale-95 shadow-md uppercase">Copy</button>
+
+            </div>
+
+            <div class="p-4 overflow-y-auto flex-grow font-mono text-[11px] text-indigo-100/90 leading-tight scrollbar-thin dark-scrollbar">
+
+                <pre id="prompt-output" class="whitespace-pre-wrap"></pre>
+
+            </div>
+
+        </div>
+
+    </main>
+
+
+
+    <!-- Firebase Scripts -->
+
+    <script type="module">
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+
+
+        // --- Config Data ---
+
+        const INITIAL_CONFIG = {
+
+            roles: [
+
+                { id: 'designer', label: '簡報設計師', prompt: '你是一位精通資訊圖表與視覺傳達的設計大師。' },
+
+                { id: 'expert', label: '領域專家', prompt: '你是一位具有多年經驗的行業專家。' },
+
+                { id: 'storyteller', label: '說故事高手', prompt: '你是一位擅長將複雜概念轉化為動人故事的作家。' },
+
+                { id: 'teacher', label: '科普老師', prompt: '你是一位擅長用淺顯易懂語言教學的國小老師。' },
+
+                { id: 'youtuber', label: '內容創作者', prompt: '你是一位知名的 YouTuber，擅長製作高點擊率的知識型影片。' },
+
+                { id: 'analyst', label: '數據分析師', prompt: '你是一位嚴謹的數據分析師，擅長從混亂的資料中找出關鍵趨勢。' },
+
+                { id: 'marketer', label: '行銷策略師', prompt: '你是一位敏銳的行銷策略師，擅長抓住受眾痛點。' },
+
+            ],
+
+            infographics: [
+
+                { id: 'i1', label: '懶人包 1', prompt: '生成一個高品質的抽象背景簡報，使用深藍色和金屬金色漸層作為主色調，融入微妙的幾何箭頭紋理來增加視覺深度，添加磨砂玻璃覆蓋層以營造半透明的現代感，右側設計深負空間來平衡布局，提供電影般的燈光效果，包括柔和的陰影 and 高光，讓整體呈現時尚企業美學，支持 8K 解析度，採用最小主義設計原則，避免過多元素，每張幻燈片保持乾淨簡潔，比例為 16:9，適合橫向投影，並確保文字與圖形完美對齊。' },
+
+                { id: 'i2', label: '懶人包 2', prompt: '改這邊改這邊，不要換行' },
+
+                { id: 'i3', label: '懶人包 3', prompt: '改這邊改這邊，不要換行' },
+
+                { id: 'i4', label: '懶人包 4', prompt: '改這邊改這邊，不要換行' },
+
+                { id: 'i5', label: '懶人包 5', prompt: '改這邊改這邊，不要換行' },
+
+                { id: 'i6', label: '懶人包 6', prompt: '改這邊改這邊，不要換行' },
+
+                { id: 'i7', label: '懶人包 7', prompt: '改這邊改這邊，不要換行' },
+
+            ],
+
+            visual_styles: [
+
+                { id: 'hand-drawn', label: '手繪塗鴉', prompt: '視覺風格：手繪塗鴉風。使用具備質感的筆記本紙張作為背景（如方格或橫線紙），所有元素、插圖與文字呈現自然的手寫筆觸，線條帶有隨性且不完全筆直的特性，色彩活潑，營造溫暖且具備個人筆記感的視覺體驗。' },
+
+                { id: 'high-key', label: '高調攝影', prompt: '視覺風格：高品質攝影，無邊框。使用「高調攝影 (High-key Photography)」作為背景，模擬明亮的自然光與柔和陰影。整體視覺極度輕盈，拒絕廉價的扁平化向量圖。' },
+
+                { id: 'modern-min', label: '現代簡約', prompt: '視覺風格：現代簡約。強調大量留白、細緻文字排版，追求極致乾淨。' },
+
+                { id: 'apple-style', label: '蘋果風格', prompt: '視覺風格：蘋果風格。使用高質感產品展示照、優雅的漸層背景與精緻的工藝感。' },
+
+                { id: 'dark-business', label: '深色商務', prompt: '視覺風格：深色商務。以深藍或純黑作為基底，搭配具備金屬質感的邊框與元素。' },
+
+                { id: 'tech-future', label: '科技未來', prompt: '視覺風格：科技未來感。融入螢光線條、數據圖表感元素以及全息投影視覺。' },
+
+                { id: 'creative-active', label: '創意活潑', prompt: '視覺風格：創意活潑。採用大膽配色與趣味插圖，營造動態且具吸引力的氛圍。' },
+
+                { id: 'academic-pro', label: '學術專業', prompt: '視覺風格：學術專業。條理分明、層次清晰，採用經典襯線體 (Serif) 呈現權威感。' },
+
+                { id: 'retro-news', label: '復古懷舊', prompt: '視覺風格：復古懷舊。低飽和度色調、仿舊報紙質感，營造歷史厚度感。' },
+
+            ],
+
+            tones: [
+
+                { id: 'inspirational', label: '專業啟發', prompt: '溝通語氣：文字應具備專業度，同時充滿啟發性，引發讀者思考。' },
+
+                { id: 'academic', label: '嚴謹學術', prompt: '溝通語氣：採用嚴謹、學術化的語法，確保論述具有高度可信度。' },
+
+                { id: 'creative-vibe', label: '活潑創意', prompt: '溝通語氣：活潑且充滿創意，打破常規，使用生動的表達方式。' },
+
+                { id: 'minimal-text', label: '簡約精煉', prompt: '溝通語氣：極致簡約，去除冗言贅字，僅保留核心精華資訊。' },
+
+                { id: 'persuasive', label: '說服力強', prompt: '溝通語氣：強調說服力，邏輯層層遞進，旨在轉化或打動受眾。' },
+
+                { id: 'narrative', label: '故事敘述', prompt: '溝通語氣：採用故事敘述感，將資訊融入情節中，增加沉浸體驗。' },
+
+            ],
+
+            audiences: [
+
+                { id: 'general', label: '一般大眾', prompt: '目標受眾：一般大眾。不預設專業背景，使用通用語境。' },
+
+                { id: 'executives', label: '公司高層', prompt: '目標受眾：公司高層。僅呈現核心決策價值與結論。' },
+
+                { id: 'clients', label: '潛在客戶', prompt: '目標受眾：潛在客戶。專注於痛點解決與產品優勢。' },
+
+                { id: 'students', label: '學生', prompt: '目標受眾：學生。使用淺顯易懂的邏輯與教育引導。' },
+
+                { id: 'social-media', label: '社群媒體', prompt: '目標受眾：社群媒體讀者。強調視覺衝擊與短平快的資訊點。' },
+
+                { id: 'developers', label: '技術開發', prompt: '目標受眾：技術開發者。提供詳細架構、代碼邏輯與實現細節。' },
+
+                { id: 'investors', label: '投資人', prompt: '目標受眾：投資人。側重市場潛力、商業模式與風險分析。' },
+
+            ],
+
+            colors: [
+
+                { id: 'warm-beige', label: '暖白米色', swatches: ['#FFFFFF', '#F5F5DC', '#D2B48C'], prompt: '配色方案：採用暖白、淺木色或米色作為主色調，風格溫馨且優雅。' },
+
+                { id: 'pro-navy', label: '專業深藍', swatches: ['#0D1B2A', '#1B263B', '#E0E1DD'], prompt: '配色方案：深海軍藍搭配石板灰。' },
+
+                { id: 'office-blue', label: 'Word 藍', swatches: ['#2B579A', '#FFFFFF', '#D9E1F2'], prompt: '配色方案：經典深藍與純白組合。' },
+
+                { id: 'office-orange', label: 'PPT 橘', swatches: ['#B7472A', '#FFFFFF', '#FFF2CC'], prompt: '配色方案：暖橘與深紅。' },
+
+                { id: 'luxury-gold', label: '奢華黑金', swatches: ['#000000', '#D4AF37', '#1A1A1A'], prompt: '配色方案：純黑背景搭配磨砂金。' },
+
+                { id: 'morandi', label: '莫蘭迪色', swatches: ['#9A8C98', '#C9ADA7', '#F2E9E4'], prompt: '配色方案：低飽和度灰階色調。' },
+
+                { id: 'apple-white', label: '純淨科技', swatches: ['#FFFFFF', '#F2F2F7', '#007AFF'], prompt: '配色方案：極簡白背景搭配系統藍。' },
+
+                { id: 'cyberpunk', label: '賽博龐克', swatches: ['#000000', '#FF00FF', '#00FFFF'], prompt: '配色方案：純黑背景搭配螢光紫青。' },
+
+            ],
+
+            notes: [
+
+                { id: 'center-focus', label: '中心對焦', prompt: '結構設計：採用「中心對焦」版型。將最核心的主題或關鍵圖案放置於畫面正中央，周圍輔以簡潔的放射狀或對稱排列的資訊，確保視覺焦點第一時間鎖定在核心資訊上。' },
+
+                { id: 'glass-container', label: '磨砂玻璃', prompt: '資訊承載於半透明白色磨砂玻璃容器中，確保圖文分離且視覺輕盈。' },
+
+                { id: '3-sec-rule', label: '3秒注意力', prompt: '文字極致精練，字體加大，確保在 3 秒內抓住觀眾注意力。' },
+
+                { id: 'clean-text', label: '圖文分離', prompt: '文字務必清晰，圖文分離。' },
+
+                { id: 'lighting', label: '光影層次', prompt: '背景必須展現高品質的光影層次，避免平面感。' },
+
+                { id: 'high-res', label: '超高畫質', prompt: '確保細節達到 8K 解析度標準。' },
+
+            ]
+
+        };
+
+
+
+        const apiKey = "";
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+
+        const app = initializeApp(firebaseConfig);
+
+        const auth = getAuth(app);
+
+        const db = getFirestore(app);
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+
+
+        // --- Application State ---
+
+        let user = null;
+
+        let selections = {
+
+            role: INITIAL_CONFIG.roles[0],
+
+            infographic: null,
+
+            visual_style: INITIAL_CONFIG.visual_styles[0],
+
+            tone: INITIAL_CONFIG.tones[0],
+
+            audience: INITIAL_CONFIG.audiences[0],
+
+            color: INITIAL_CONFIG.colors[0],
+
+            notes: [INITIAL_CONFIG.notes[1], INITIAL_CONFIG.notes[2], INITIAL_CONFIG.notes[5]],
+
+        };
+
+        let title = '';
+
+        let customNotes = '';
+
+        let analyzing = false;
+
+
+
+        // --- DOM Elements ---
+
+        const selectionGroupsContainer = document.getElementById('selection-groups-container');
+
+        const titleInput = document.getElementById('title-input');
+
+        const customNotesInput = document.getElementById('custom-notes-input');
+
+        const promptOutput = document.getElementById('prompt-output');
+
+        const copyBtn = document.getElementById('copy-btn');
+
+        const fileInput = document.getElementById('file-input');
+
+        const fileDisplay = document.getElementById('file-display');
+
+        const analyzeDetailedBtn = document.getElementById('analyze-detailed');
+
+        const analyzeConciseBtn = document.getElementById('analyze-concise');
+
+        const resetAllBtn = document.getElementById('reset-all-btn');
+
+        const clearSelectionsBtn = document.getElementById('clear-selections-btn');
+
+
+
+        // --- Functions ---
+
+
+
+        const buildPrompt = () => {
+
+            const buildSection = (titleLabel, categoryKey) => {
+
+                const stateKey = categoryKey.replace(/s$/, '');
+
+                const selection = selections[stateKey];
+
+                if (!selection) return "";
+
+                return `\n# ${titleLabel}\n${selection.prompt}\n`;
+
+            };
+
+
+
+            const buildNoteSection = () => {
+
+                const selectedNotes = selections.notes;
+
+                if (!selectedNotes || selectedNotes.length === 0) return "";
+
+                const list = selectedNotes.map(n => `- ${n.prompt}`).join('\n');
+
+                return `\n# 具體要求\n${list}\n`;
+
+            };
+
+
+
+            let prompt = "";
+
+            if (title.trim()) prompt += `# 內容標題\n"${title.trim()}"\n`;
+
+            if (selections.role) prompt += buildSection("角色設定", "roles");
+
+            if (selections.infographic) prompt += buildSection("懶人包樣式", "infographics");
+
+
+
+            if (selections.visual_style || selections.color) {
+
+                prompt += `\n# 視覺與風格\n`;
+
+                if (selections.visual_style) prompt += selections.visual_style.prompt + "\n";
+
+                if (selections.color) prompt += selections.color.prompt + "\n";
+
+            }
+
+
+
+            if (selections.tone || selections.audience) {
+
+                prompt += `\n# 策略設定\n`;
+
+                if (selections.tone) prompt += selections.tone.prompt + "\n";
+
+                if (selections.audience) prompt += selections.audience.prompt + "\n";
+
+            }
+
+
+
+            if (customNotes && customNotes.trim()) {
+
+                prompt += `\n# 任務細節與額外備註\n${customNotes.trim()}\n`;
+
+            }
+
+
+
+            prompt += buildNoteSection();
+
+            promptOutput.textContent = prompt.trim();
+
+        };
+
+
+
+        const renderSelections = () => {
+
+            selectionGroupsContainer.innerHTML = '';
+
+           
+
+            const groups = [
+
+                { label: "1. 角色", key: "roles" },
+
+                { label: "2. 懶人包", key: "infographics" },
+
+                { label: "3. 風格", key: "visual_styles" },
+
+                { label: "4. 語氣", key: "tones" },
+
+                { label: "5. 受眾", key: "audiences" },
+
+                { label: "6. 配色", key: "colors", isColor: true },
+
+                { label: "7. 備註", key: "notes", isMulti: true }
+
+            ];
+
+
+
+            groups.forEach(group => {
+
+                const groupEl = document.createElement('div');
+
+                groupEl.className = 'mb-2 shrink-0';
+
+               
+
+                const titleEl = document.createElement('h3');
+
+                titleEl.className = 'text-[10px] font-bold text-gray-400 uppercase tracking-tight mb-1 leading-none';
+
+                titleEl.innerHTML = `${group.label} ${group.isMulti ? '<span class="text-indigo-400 normal-case ml-1 font-normal opacity-70">(複選)</span>' : ''}`;
+
+                groupEl.appendChild(titleEl);
+
+
+
+                const grid = document.createElement('div');
+
+                grid.className = 'grid grid-cols-8 gap-0.5 w-fit';
+
+
+
+                INITIAL_CONFIG[group.key].forEach(opt => {
+
+                    const btn = document.createElement('button');
+
+                    const stateKey = group.key.replace(/s$/, '');
+
+                    const isActive = group.isMulti
+
+                        ? selections.notes.some(n => n.id === opt.id)
+
+                        : selections[stateKey]?.id === opt.id;
+
+
+
+                    btn.className = `selection-btn group relative flex flex-col items-center justify-center h-[26px] w-[60px] rounded transition-all text-[10px] text-center border shrink-0 ${
+
+                        isActive ? 'active' : 'border-slate-100 bg-white text-gray-400 hover:border-indigo-200'
+
+                    }`;
+
+                   
+
+                    btn.innerHTML = `<div class="truncate w-full px-0.5 leading-tight">${opt.label}</div>`;
+
+                   
+
+                    if (group.isColor && opt.swatches) {
+
+                        const swatchContainer = document.createElement('div');
+
+                        swatchContainer.className = 'flex gap-0.5 mt-[1px]';
+
+                        opt.swatches.forEach(c => {
+
+                            const swatch = document.createElement('div');
+
+                            swatch.className = 'w-1.5 h-0.5 border border-black/5';
+
+                            swatch.style.backgroundColor = c;
+
+                            swatchContainer.appendChild(swatch);
+
+                        });
+
+                        btn.appendChild(swatchContainer);
+
+                    }
+
+
+
+                    btn.onclick = () => {
+
+                        if (group.isMulti) {
+
+                            const index = selections.notes.findIndex(n => n.id === opt.id);
+
+                            if (index > -1) selections.notes.splice(index, 1);
+
+                            else selections.notes.push(opt);
+
+                        } else {
+
+                            selections[stateKey] = selections[stateKey]?.id === opt.id ? null : opt;
+
+                        }
+
+                        renderSelections();
+
+                        buildPrompt();
+
+                    };
+
+                    grid.appendChild(btn);
+
+                });
+
+                groupEl.appendChild(grid);
+
+                selectionGroupsContainer.appendChild(groupEl);
+
+            });
+
+        };
+
+
+
+        const analyzeSlide = async (mode = 'detailed') => {
+
+            const file = fileInput.files[0];
+
+            if (!file || analyzing) return;
+
+           
+
+            analyzing = true;
+
+            analyzeDetailedBtn.disabled = true;
+
+            analyzeConciseBtn.disabled = true;
+
+            const originalDetailedText = analyzeDetailedBtn.innerHTML;
+
+            const originalConciseText = analyzeConciseBtn.innerHTML;
+
+           
+
+            if(mode === 'detailed') analyzeDetailedBtn.innerHTML = '<i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i> 分析中...';
+
+            else analyzeConciseBtn.innerHTML = '<i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i> 分析中...';
+
+            lucide.createIcons();
+
+
+
+            try {
+
+                const reader = new FileReader();
+
+                reader.readAsDataURL(file);
+
+                reader.onloadend = async () => {
+
+                    const base64Data = reader.result.split(',')[1];
+
+                    let prompt = mode === 'detailed'
+
+                        ? "你是一位專業的視覺分析師。請詳細分析這份 NotebookLM PDF 投影片（或圖片內容）的視覺設計元素，包括配色方案、排版邏輯、字體特點以及整體的視覺氛圍。請以「條列式」的方式呈現分析結果，並將最關鍵的核心重點放在最前面。分析結果應是一段可以用於 AI 內容生成的「提示詞描述」，且必須使用「繁體中文」撰寫。請直接回傳分析後的條列內容，不要有額外的開場白或結論。"
+
+                        : "你是一位專業的視覺分析師。請以「極其精煉」且「文字精練」的條列式文字，快速分析這張投影片的風格與排版核心。排除贅字，重點放前面，總字數控制在 100 字以內，並使用「繁體中文」撰寫。請直接回傳核心條列內容。";
+
+
+
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+
+                        method: 'POST',
+
+                        headers: { 'Content-Type': 'application/json' },
+
+                        body: JSON.stringify({
+
+                            contents: [{
+
+                                parts: [
+
+                                    { text: prompt },
+
+                                    { inlineData: { mimeType: file.type || 'application/pdf', data: base64Data } }
+
+                                ]
+
+                            }]
+
+                        })
+
+                    });
+
+
+
+                    const result = await response.json();
+
+                    const analysisText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                    if (analysisText) {
+
+                        const header = mode === 'detailed' ? "--- AI 分析結果 (詳細版) ---" : "--- AI 分析結果 (精簡版) ---";
+
+                        customNotes = (customNotes ? customNotes + "\n\n" : "") + header + "\n" + analysisText.trim();
+
+                        customNotesInput.value = customNotes;
+
+                        buildPrompt();
+
+                    }
+
+                   
+
+                    finishAnalysis();
+
+                };
+
+            } catch (err) {
+
+                console.error("分析失敗:", err);
+
+                finishAnalysis();
+
+            }
+
+
+
+            function finishAnalysis() {
+
+                analyzing = false;
+
+                analyzeDetailedBtn.disabled = false;
+
+                analyzeConciseBtn.disabled = false;
+
+                analyzeDetailedBtn.innerHTML = originalDetailedText;
+
+                analyzeConciseBtn.innerHTML = originalConciseText;
+
+                lucide.createIcons();
+
+            }
+
+        };
+
+
+
+        // --- Event Listeners ---
+
+
+
+        titleInput.oninput = (e) => { title = e.target.value; buildPrompt(); };
+
+        customNotesInput.oninput = (e) => { customNotes = e.target.value; buildPrompt(); };
+
+
+
+        fileInput.onchange = (e) => {
+
+            const file = e.target.files[0];
+
+            if (file) {
+
+                fileDisplay.innerHTML = `<i data-lucide="file-text" class="w-4 h-4 text-indigo-600"></i><span class="text-[10px] font-bold truncate max-w-[150px] text-indigo-600">${file.name}</span>`;
+
+                analyzeDetailedBtn.className = "px-3 py-1.5 rounded-md text-[10px] font-bold flex items-center justify-center gap-1.5 transition-all bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95 shadow-md";
+
+                analyzeConciseBtn.className = "px-3 py-1.5 rounded-md text-[10px] font-bold flex items-center justify-center gap-1.5 transition-all bg-slate-800 text-white hover:bg-black active:scale-95 shadow-sm border border-slate-700";
+
+                analyzeDetailedBtn.disabled = false;
+
+                analyzeConciseBtn.disabled = false;
+
+            } else {
+
+                fileDisplay.innerHTML = `<i data-lucide="upload" class="w-4 h-4"></i><span class="text-[10px] font-bold">上傳 NotebookLM PDF 或截圖檔案</span>`;
+
+                analyzeDetailedBtn.disabled = true;
+
+                analyzeConciseBtn.disabled = true;
+
+            }
+
+            lucide.createIcons();
+
+        };
+
+
+
+        analyzeDetailedBtn.onclick = () => analyzeSlide('detailed');
+
+        analyzeConciseBtn.onclick = () => analyzeSlide('concise');
+
+
+
+        copyBtn.onclick = () => {
+
+            const el = document.createElement('textarea');
+
+            el.value = promptOutput.textContent;
+
+            document.body.appendChild(el);
+
+            el.select();
+
+            document.execCommand('copy');
+
+            document.body.removeChild(el);
+
+           
+
+            const originalText = copyBtn.innerText;
+
+            copyBtn.innerText = 'COPIED';
+
+            setTimeout(() => copyBtn.innerText = originalText, 2000);
+
+        };
+
+
+
+        resetAllBtn.onclick = () => {
+
+            title = '';
+
+            customNotes = '';
+
+            selections = {
+
+                role: null, infographic: null, visual_style: null,
+
+                tone: null, audience: null, color: null,
+
+                notes: [],
+
+            };
+
+            titleInput.value = '';
+
+            customNotesInput.value = '';
+
+            fileInput.value = '';
+
+            fileDisplay.innerHTML = `<i data-lucide="upload" class="w-4 h-4"></i><span class="text-[10px] font-bold">上傳 NotebookLM PDF 或截圖檔案</span>`;
+
+            analyzeDetailedBtn.disabled = true;
+
+            analyzeConciseBtn.disabled = true;
+
+            renderSelections();
+
+            buildPrompt();
+
+            lucide.createIcons();
+
+        };
+
+
+
+        clearSelectionsBtn.onclick = () => {
+
+            selections = {
+
+                role: null, infographic: null, visual_style: null,
+
+                tone: null, audience: null, color: null,
+
+                notes: [],
+
+            };
+
+            renderSelections();
+
+            buildPrompt();
+
+        };
+
+
+
+        // --- Resizer Logic ---
+
+        const resizer = document.getElementById('resizer');
+
+        const leftPanel = document.getElementById('left-panel');
+
+        const container = document.getElementById('container');
+
+        let isResizing = false;
+
+
+
+        resizer.onmousedown = (e) => {
+
+            isResizing = true;
+
+            document.body.style.cursor = 'col-resize';
+
+            document.body.style.userSelect = 'none';
+
+        };
+
+
+
+        document.onmousemove = (e) => {
+
+            if (!isResizing) return;
+
+            const rect = container.getBoundingClientRect();
+
+            let newWidth = ((e.clientX - rect.left) / rect.width) * 100;
+
+            if (newWidth >= 20 && newWidth <= 85) {
+
+                leftPanel.style.flexBasis = `${newWidth}%`;
+
+            }
+
+        };
+
+
+
+        document.onmouseup = () => {
+
+            isResizing = false;
+
+            document.body.style.cursor = 'default';
+
+            document.body.style.userSelect = 'auto';
+
+        };
+
+
+
+        // --- Auth & Initialize ---
+
+        const init = async () => {
+
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+
+                await signInWithCustomToken(auth, __initial_auth_token);
+
+            } else {
+
+                await signInAnonymously(auth);
+
+            }
+
+
+
+            onAuthStateChanged(auth, async (u) => {
+
+                user = u;
+
+                if (!user) return;
+
+               
+
+                // Load from Firestore
+
+                try {
+
+                    const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'config');
+
+                    const snap = await getDoc(docRef);
+
+                    if (snap.exists()) {
+
+                        const data = snap.data();
+
+                        if (data.selections) selections = data.selections;
+
+                        if (data.title) { title = data.title; titleInput.value = title; }
+
+                        if (data.customNotes) { customNotes = data.customNotes; customNotesInput.value = customNotes; }
+
+                    }
+
+                } catch (e) { console.error("Load failed", e); }
+
+               
+
+                renderSelections();
+
+                buildPrompt();
+
+                lucide.createIcons();
+
+            });
+
+        };
+
+
+
+        init();
+
+    </script>
+
+</body>
+
+</html>
